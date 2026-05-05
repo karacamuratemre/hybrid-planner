@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="tr">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${pageTitle != null ? pageTitle + ' — Hybrid Planner' : 'Hybrid Planner'}">Hybrid Planner</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+
+<div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">HP</div>
+            <div>
+                <div class="brand-name">Hybrid Planner</div>
+                <div class="brand-sub">Oturma düzeni yönetimi</div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Tanımlar</div>
+            <a th:href="@{/pyo}" th:classappend="${activePage == 'pyo' ? ' active' : ''}" class="nav-item">
+                <span class="nav-icon">👤</span> PYO Yönetimi
+            </a>
+            <a th:href="@{/room}" th:classappend="${activePage == 'room' ? ' active' : ''}" class="nav-item">
+                <span class="nav-icon">🚪</span> Oda Yönetimi
+            </a>
+            <a th:href="@{/team}" th:classappend="${activePage == 'team' ? ' active' : ''}" class="nav-item">
+                <span class="nav-icon">👥</span> Ekip Yönetimi
+            </a>
+            <a th:href="@{/staff}" th:classappend="${activePage == 'staff' ? ' active' : ''}" class="nav-item">
+                <span class="nav-icon">🧑‍💻</span> Personel Yönetimi
+            </a>
+            <div class="nav-section-label">Planlama</div>
+            <a th:href="@{/distribute}" th:classappend="${activePage == 'distribute' ? ' active' : ''}" class="nav-item">
+                <span class="nav-icon">📅</span> Dağıtım
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-content">
+        <!-- Flash messages -->
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+        <div th:if="${warning}" class="alert alert-warning" th:text="${warning}"></div>
+
+        <!-- Page content injected here -->
+        <div th:replace="${content}">Content here</div>
+    </main>
+</div>
+
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="tr">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Personel Yönetimi — Hybrid Planner</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div class="layout">
+    <aside th:replace="~{fragments/sidebar :: sidebar('staff')}"></aside>
+    <main class="main-content">
+
+        <div th:if="${success}" class="alert alert-success">✓ <span th:text="${success}"></span></div>
+        <div th:if="${error}"   class="alert alert-error">✗ <span th:text="${error}"></span></div>
+        <div th:if="${warning}" class="alert alert-warning">⚠ <span th:text="${warning}"></span></div>
+
+        <div class="page-header">
+            <div class="page-title">Personel Yönetimi</div>
+            <div class="page-subtitle">Personeli tek tek ekleyin veya Excel ile toplu import yapın.</div>
+        </div>
+
+        <div th:if="${importResult}" class="card">
+            <div class="card-title">Import Sonucu</div>
+            <div th:if="${!importResult.errors().isEmpty()}" class="warning-list" style="margin-bottom:10px">
+                <div class="warning-list-title">Hatalar</div>
+                <ul><li th:each="err : ${importResult.errors()}" th:text="${err}"></li></ul>
+            </div>
+            <div th:if="${!importResult.successes().isEmpty()}" class="ok-box">
+                ✓ <span th:text="${importResult.imported()}"></span> personel başarıyla import edildi.
+            </div>
+        </div>
+
+        <div class="tab-bar">
+            <button class="tab-btn active" data-tab="manual" onclick="switchTab('manual')">Tekli Ekle</button>
+            <button class="tab-btn" data-tab="excel" onclick="switchTab('excel')">Excel ile Import</button>
+        </div>
+
+        <div id="tab-manual" class="tab-content active">
+            <div class="card">
+                <div class="card-title">Yeni Personel Ekle</div>
+                <div th:if="${#lists.isEmpty(teams)}" class="alert alert-warning">
+                    ⚠ Önce ekip tanımlamanız gerekiyor.
+                </div>
+                <form th:unless="${#lists.isEmpty(teams)}" th:action="@{/staff}" method="post">
+                    <div class="form-row">
+                        <div class="form-group wide">
+                            <label>Ad Soyad</label>
+                            <input type="text" name="name" placeholder="ör. Ahmet Kaya" required maxlength="100"/>
+                        </div>
+                        <div class="form-group">
+                            <label>E-posta (opsiyonel)</label>
+                            <input type="email" name="email" placeholder="ahmet@sirket.com"/>
+                        </div>
+                        <div class="form-group">
+                            <label>Ekip</label>
+                            <select name="teamId" required>
+                                <option value="">— Seçin —</option>
+                                <option th:each="t : ${teams}" th:value="${t.id}"
+                                        th:text="${t.name} + ' (' + ${t.pyo.code} + ')'"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="margin-top:14px;margin-bottom:16px">
+                        <label style="display:block;margin-bottom:8px">
+                            Ofis Günleri <span style="font-size:11px;color:#aaa">(3 gün seçin – boş bırakırsanız otomatik atanır)</span>
+                        </label>
+                        <div class="day-picker">
+                            <label class="day-label" th:each="d : ${allDays}">
+                                <input type="checkbox" name="days" class="day-checkbox" th:value="${d.name()}"/>
+                                <span class="day-chip" th:text="${d.shortName}"></span>
+                            </label>
+                            <span class="day-hint">0/3 gün seçili (boş = otomatik)</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" type="submit">+ Ekle</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="tab-excel" class="tab-content">
+            <div class="card">
+                <div class="card-title">Excel ile Toplu Import</div>
+                <div class="import-box">
+                    <div class="import-title">📋 Excel Formatı (.xlsx)</div>
+                    <div class="import-hint">İlk satır başlık satırıdır (atlanır). Ekip adı tam eşleşme ile aranır.</div>
+                    <table class="excel-format-table">
+                        <thead>
+                        <tr><th>A: Ad Soyad*</th><th>B: E-posta</th><th>C: Ekip Adı*</th><th>D: Günler</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr><td>Ahmet Kaya</td><td>ahmet@sirket.com</td><td>Keycloak</td><td>Pzt,Çar,Cum</td></tr>
+                        <tr><td>Ayşe Demir</td><td></td><td>Tahsilat</td><td><em style="color:#aaa">boş = otomatik</em></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <form th:action="@{/staff/import}" method="post" enctype="multipart/form-data">
+                    <div class="form-row" style="align-items:flex-end">
+                        <div class="form-group">
+                            <label>Excel Dosyası (.xlsx)</label>
+                            <input type="file" name="file" accept=".xlsx" required/>
+                        </div>
+                        <div style="padding-bottom:1px">
+                            <button class="btn btn-success" type="submit">📥 Import Et</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card" style="padding:0;margin-top:20px">
+            <div style="padding:16px 20px;border-bottom:1px solid #f0f2f8;display:flex;align-items:center;justify-content:space-between">
+                <div style="font-size:14px;font-weight:600">Personel Listesi</div>
+                <span class="badge badge-gray" th:text="${#lists.size(staffList)} + ' kişi'"></span>
+            </div>
+            <div th:if="${#lists.isEmpty(staffList)}" class="empty-state">
+                <div class="empty-icon">🧑‍💻</div>
+                Henüz personel eklenmemiş.
+            </div>
+            <div th:unless="${#lists.isEmpty(staffList)}">
+                <div class="person-list-item" th:each="s : ${staffList}">
+                    <div class="avatar badge-blue" th:text="${s.initials}"></div>
+                    <div class="person-info">
+                        <div class="person-name" th:text="${s.name}"></div>
+                        <div class="person-meta">
+                            <span th:text="${s.team.name}"></span> ·
+                            <span th:text="${s.team.pyo.name}"></span> ·
+                            <span th:text="${s.team.room.name}"></span>
+                            <span th:if="${s.email}" style="margin-left:8px;color:#aaa" th:text="${s.email}"></span>
+                        </div>
+                    </div>
+                    <div class="day-tags">
+                        <div th:each="d : ${allDays}"
+                             th:class="${s.workDays.contains(d)} ? 'day-tag on' : 'day-tag off'"
+                             th:text="${d.shortName}"></div>
+                    </div>
+                    <span th:if="${s.manualDays}" class="badge"
+                          style="margin-left:8px;background:#f0f4ff;color:#3a5fcc;font-size:10px">Manuel</span>
+                    <span th:unless="${s.manualDays}" class="badge"
+                          style="margin-left:8px;background:#f0f8f0;color:#27ae60;font-size:10px">Otomatik</span>
+                    <form th:action="@{/staff/{id}/delete(id=${s.id})}" method="post"
+                          th:id="'del-staff-' + ${s.id}" style="margin-left:8px">
+                        <button type="button" class="btn btn-danger"
+                                th:data-formid="'del-staff-' + ${s.id}"
+                                th:data-name="${s.name}"
+                                onclick="confirmDeleteBtn(this)">Sil</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>

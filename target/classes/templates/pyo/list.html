@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="tr">
+<head>
+    <meta charset="UTF-8"/>
+    <title>PYO Yönetimi — Hybrid Planner</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div class="layout">
+    <aside th:replace="~{fragments/sidebar :: sidebar('pyo')}"></aside>
+    <main class="main-content">
+
+        <div th:if="${success}" class="alert alert-success">✓ <span th:text="${success}"></span></div>
+        <div th:if="${error}"   class="alert alert-error">✗ <span th:text="${error}"></span></div>
+        <div th:if="${importErrors}" class="warning-list">
+            <div class="warning-list-title">Import Hataları</div>
+            <ul><li th:each="e : ${importErrors}" th:text="${e}"></li></ul>
+        </div>
+
+        <div class="page-header">
+            <div class="page-title">PYO Yönetimi</div>
+            <div class="page-subtitle">Proje yöneticilerini tanımlayın.</div>
+        </div>
+
+        <div class="tab-bar">
+            <button class="tab-btn active" data-tab="manual" onclick="switchTab('manual')">Tekli Ekle</button>
+            <button class="tab-btn" data-tab="excel" onclick="switchTab('excel')">Excel ile Import</button>
+        </div>
+
+        <!-- Tekli ekle -->
+        <div id="tab-manual" class="tab-content active">
+            <div class="card">
+                <div class="card-title">Yeni PYO Ekle</div>
+                <form th:action="@{/pyo}" method="post">
+                    <div class="form-row">
+                        <div class="form-group wide">
+                            <label>Ad Soyad</label>
+                            <input type="text" name="name" placeholder="ör. Abdullah Yılmaz" required maxlength="100"/>
+                        </div>
+                        <div class="form-group narrow">
+                            <label>Kısa Kod</label>
+                            <input type="text" name="code" placeholder="AY" maxlength="5" style="text-transform:uppercase"/>
+                        </div>
+                        <div style="padding-top:20px">
+                            <button class="btn btn-primary" type="submit">+ Ekle</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Excel import -->
+        <div id="tab-excel" class="tab-content">
+            <div class="card">
+                <div class="card-title">Excel ile Toplu Import</div>
+                <div class="import-box">
+                    <div class="import-title">📋 Excel Formatı (.xlsx)</div>
+                    <table class="excel-format-table">
+                        <thead><tr><th>A: Ad Soyad *</th><th>B: Kısa Kod</th></tr></thead>
+                        <tbody>
+                        <tr><td>Abdullah Yılmaz</td><td>AY</td></tr>
+                        <tr><td>Süleyman Kaya</td><td><em style="color:#aaa">boş = otomatik</em></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <form th:action="@{/pyo/import}" method="post" enctype="multipart/form-data">
+                    <div class="form-row" style="align-items:flex-end">
+                        <div class="form-group">
+                            <label>Excel Dosyası (.xlsx)</label>
+                            <input type="file" name="file" accept=".xlsx" required/>
+                        </div>
+                        <div><button class="btn btn-success" type="submit">📥 Import Et</button></div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Liste -->
+        <div class="card" style="padding:0;margin-top:20px">
+            <div th:if="${#lists.isEmpty(pyos)}" class="empty-state">
+                <div class="empty-icon">👤</div>Henüz PYO tanımlanmamış.
+            </div>
+            <table th:unless="${#lists.isEmpty(pyos)}">
+                <thead><tr><th>Ad Soyad</th><th>Kısa Kod</th><th>Ekip Sayısı</th><th>İşlem</th></tr></thead>
+                <tbody>
+                <tr th:each="p : ${pyos}">
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <div class="avatar badge-blue" th:text="${p.code}"></div>
+                            <span th:text="${p.name}"></span>
+                        </div>
+                    </td>
+                    <td><span class="badge badge-blue" th:text="${p.code}"></span></td>
+                    <td><span class="badge badge-gray" th:text="${#lists.size(p.teams)} + ' ekip'"></span></td>
+                    <td>
+                        <form th:action="@{/pyo/{id}/delete(id=${p.id})}" method="post" th:id="'del-pyo-' + ${p.id}">
+                            <button type="button" class="btn btn-danger"
+                                    th:data-formid="'del-pyo-' + ${p.id}"
+                                    th:data-name="${p.name}"
+                                    onclick="confirmDeleteBtn(this)">Sil</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>

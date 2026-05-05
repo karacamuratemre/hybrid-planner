@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="tr">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Hybrid Planner</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">HP</div>
+            <div>
+                <div class="brand-name">Hybrid Planner</div>
+                <div class="brand-sub">Oturma düzeni yönetimi</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Tanımlar</div>
+            <a th:href="@{/pyo}" class="nav-item"><span class="nav-icon">👤</span> PYO Yönetimi</a>
+            <a th:href="@{/room}" class="nav-item"><span class="nav-icon">🚪</span> Oda Yönetimi</a>
+            <a th:href="@{/team}" class="nav-item"><span class="nav-icon">👥</span> Ekip Yönetimi</a>
+            <a th:href="@{/staff}" class="nav-item"><span class="nav-icon">🧑‍💻</span> Personel Yönetimi</a>
+            <div class="nav-section-label">Planlama</div>
+            <a th:href="@{/distribute}" class="nav-item"><span class="nav-icon">📅</span> Dağıtım</a>
+        </nav>
+    </aside>
+    <main class="main-content">
+        <div class="home-hero">
+            <h1>Hybrid Çalışma Planlayıcı</h1>
+            <p>Ekiplerinizi odalara ve günlere optimal şekilde dağıtın</p>
+            <div class="step-list">
+                <div class="step-item">
+                    <div class="step-num">Adım 1</div>
+                    <div class="step-title">PYO Tanımla</div>
+                    <a th:href="@{/pyo}" class="step-link">Proje yöneticilerini ekle →</a>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">Adım 2</div>
+                    <div class="step-title">Odaları Tanımla</div>
+                    <a th:href="@{/room}" class="step-link">Oda ve kapasiteleri gir →</a>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">Adım 3</div>
+                    <div class="step-title">Ekipleri Tanımla</div>
+                    <a th:href="@{/team}" class="step-link">Ekip ve odaları bağla →</a>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">Adım 4</div>
+                    <div class="step-title">Personel Ekle</div>
+                    <a th:href="@{/staff}" class="step-link">Tek tek veya Excel ile →</a>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">Adım 5</div>
+                    <div class="step-title">Dağıt &amp; İndir</div>
+                    <a th:href="@{/distribute}" class="step-link">Planı oluştur ve dışa aktar →</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-num" th:text="${pyoCount}">0</div>
+                <div class="stat-label">PYO</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" th:text="${roomCount}">0</div>
+                <div class="stat-label">Oda</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" th:text="${teamCount}">0</div>
+                <div class="stat-label">Ekip</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" th:text="${staffCount}">0</div>
+                <div class="stat-label">Personel</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Hızlı Erişim</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <a th:href="@{/pyo}" class="btn btn-primary">+ PYO Ekle</a>
+                <a th:href="@{/room}" class="btn btn-primary">+ Oda Ekle</a>
+                <a th:href="@{/team}" class="btn btn-primary">+ Ekip Ekle</a>
+                <a th:href="@{/staff}" class="btn btn-primary">+ Personel Ekle</a>
+                <a th:href="@{/distribute}" class="btn btn-success btn-lg">📅 Dağıtım Yap</a>
+            </div>
+        </div>
+    </main>
+</div>
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>

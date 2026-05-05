@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="tr">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Dağıtım — Hybrid Planner</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+    <style>
+        .team-colors th:nth-child(1) { width: 200px; }
+        .color-0  { background:#e8f0ff; color:#1e5bb8; }
+        .color-1  { background:#e0f7f2; color:#0d7a5f; }
+        .color-2  { background:#f0eeff; color:#5a3db8; }
+        .color-3  { background:#fef3e0; color:#8a5c00; }
+        .color-4  { background:#fdecea; color:#b03020; }
+        .color-5  { background:#d4f0e0; color:#155724; }
+        .color-6  { background:#fff0f5; color:#8b1a4a; }
+
+        .dot-0 { background:#4a6fdf; }
+        .dot-1 { background:#1d9e75; }
+        .dot-2 { background:#7f77dd; }
+        .dot-3 { background:#ba7517; }
+        .dot-4 { background:#d85a30; }
+        .dot-5 { background:#639922; }
+        .dot-6 { background:#c0508a; }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <aside th:replace="~{fragments/sidebar :: sidebar('distribute')}"></aside>
+    <main class="main-content">
+
+        <div class="page-header">
+            <div class="page-title">Dağıtım</div>
+            <div class="page-subtitle">Personeli odalara ve günlere otomatik olarak dağıtın.</div>
+        </div>
+
+        <!-- Pre-check stats -->
+        <div class="stats-grid" th:unless="${distributed}">
+            <div class="stat-card">
+                <div class="stat-num" th:text="${staffCount}">0</div>
+                <div class="stat-label">Personel</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" th:text="${teamCount}">0</div>
+                <div class="stat-label">Ekip</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" th:text="${roomCount}">0</div>
+                <div class="stat-label">Oda</div>
+            </div>
+        </div>
+
+        <!-- Action bar -->
+        <div class="action-bar">
+            <form th:action="@{/distribute}" method="post">
+                <button class="btn btn-success btn-lg" type="submit">
+                    ⟳ Dağıtımı Çalıştır
+                </button>
+            </form>
+            <a th:if="${distributed}" th:href="@{/distribute/export}" class="btn btn-export btn-lg">
+                📄 Word Belgesi İndir (.docx)
+            </a>
+        </div>
+
+        <!-- Results -->
+        <div th:if="${distributed}">
+
+            <!-- Warnings -->
+            <div th:if="${result.hasWarnings()}" class="warning-list">
+                <div class="warning-list-title">⚠ Kapasite Uyarıları</div>
+                <ul>
+                    <li th:each="w : ${result.warnings()}" th:text="${w}"></li>
+                </ul>
+            </div>
+            <div th:unless="${result.hasWarnings()}" class="ok-box">
+                ✓ Tüm günlerde oda kapasiteleri uygun. Dağıtım başarıyla tamamlandı.
+            </div>
+
+            <!-- Summary stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-num" th:text="${#lists.size(result.allStaff())}">0</div>
+                    <div class="stat-label">Toplam Personel</div>
+                </div>
+                <div class="stat-card" th:each="day, iter : ${allDays}">
+                    <div class="stat-num"
+                         th:text="${result.plan().get(day) != null ?
+                            result.plan().get(day).values().stream().mapToInt(java.util.List::size).sum() : 0}">0</div>
+                    <div class="stat-label" th:text="${day.shortName}"></div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tab-bar">
+                <button class="tab-btn active" data-tab="daily" onclick="switchTab('daily')">Gün Bazlı</button>
+                <button class="tab-btn" data-tab="byroom" onclick="switchTab('byroom')">Oda Bazlı</button>
+                <button class="tab-btn" data-tab="bypyo" onclick="switchTab('bypyo')">PYO Bazlı</button>
+            </div>
+
+            <!-- Tab: Daily View -->
+            <div id="tab-daily" class="tab-content active">
+                <div class="plan-grid">
+                    <div class="plan-day-col" th:each="day, dayIdx : ${allDays}">
+                        <div class="plan-day-header">
+                            <div th:text="${day.displayName}"></div>
+                            <div style="font-size:10px;opacity:0.7;margin-top:1px"
+                                 th:text="${result.plan().get(day) != null ?
+                                    result.plan().get(day).values().stream().mapToInt(java.util.List::size).sum() + ' kişi' : '0 kişi'}"></div>
+                        </div>
+                        <div class="plan-day-body">
+                            <div th:if="${result.plan().get(day) == null or result.plan().get(day).isEmpty()}"
+                                 style="font-size:11px;color:#ccc;text-align:center;padding:8px">boş</div>
+                            <th:block th:each="roomEntry : ${result.plan().get(day)}">
+                                <div class="plan-room-block">
+                                    <div th:class="${roomEntry.value.size() > roomEntry.key.capacity} ? 'plan-room-name over-cap' : 'plan-room-name'">
+                                        <span th:text="${roomEntry.key.name}"></span>
+                                        <span th:text="${roomEntry.value.size()} + '/' + ${roomEntry.key.capacity}"></span>
+                                    </div>
+                                    <div th:each="s, sIdx : ${roomEntry.value}"
+                                         th:class="'plan-person color-' + ${sIdx.index % 7}">
+                                        <div th:class="'plan-dot dot-' + ${sIdx.index % 7}"></div>
+                                        <span th:text="${s.name.split(' ')[0]}"></span>
+                                    </div>
+                                </div>
+                            </th:block>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: By Room -->
+            <div id="tab-byroom" class="tab-content">
+                <th:block th:each="s : ${result.allStaff()}"><!-- just to get rooms --></th:block>
+
+                <div th:each="roomEntry : ${result.plan().get(allDays[0]).entrySet()}" style="display:none"></div>
+
+                <!-- Group all staff by room -->
+                <div class="card" th:each="s : ${result.allStaff()}"
+                     th:if="${false}"><!-- placeholder --></div>
+
+                <!-- Real room-based view: show each room with all its staff and their days -->
+                <div th:with="roomMap=${result.allStaff().stream().collect(
+                        T(java.util.stream.Collectors).groupingBy(s -> s.getTeam().getRoom()))}">
+                    <div class="card" th:each="roomEntry : ${roomMap}" style="margin-bottom:14px">
+                        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+                            <span th:text="${roomEntry.key.name}"></span>
+                            <span class="badge badge-blue"
+                                  th:text="'Kapasite: ' + ${roomEntry.key.capacity}"></span>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                <tr>
+                                    <th>Ad Soyad</th>
+                                    <th>Ekip</th>
+                                    <th>PYO</th>
+                                    <th th:each="d : ${allDays}" th:text="${d.shortName}" style="text-align:center;width:42px"></th>
+                                    <th>Tür</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="s, sIdx : ${roomEntry.value}">
+                                    <td>
+                                        <div style="display:flex;align-items:center;gap:8px">
+                                            <div class="avatar" th:class="'avatar color-' + ${sIdx.index % 7}"
+                                                 th:text="${s.initials}"></div>
+                                            <span th:text="${s.name}"></span>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge badge-purple" th:text="${s.team.name}"></span></td>
+                                    <td><span th:text="${s.team.pyo.name}"></span></td>
+                                    <td th:each="d : ${allDays}" style="text-align:center">
+                                        <span th:if="${s.workDays.contains(d)}"
+                                              style="font-size:14px">✓</span>
+                                        <span th:unless="${s.workDays.contains(d)}"
+                                              style="color:#ddd;font-size:14px">—</span>
+                                    </td>
+                                    <td>
+                                        <span th:if="${s.manualDays}" class="badge"
+                                              style="background:#f0f4ff;color:#3a5fcc;font-size:10px">Manuel</span>
+                                        <span th:unless="${s.manualDays}" class="badge"
+                                              style="background:#f0f8f0;color:#27ae60;font-size:10px">Otomatik</span>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: By PYO -->
+            <div id="tab-bypyo" class="tab-content">
+                <div th:with="pyoMap=${result.allStaff().stream().collect(
+                        T(java.util.stream.Collectors).groupingBy(s -> s.getTeam().getPyo()))}">
+                    <div th:each="pyoEntry : ${pyoMap}" style="margin-bottom:24px">
+                        <div style="font-size:15px;font-weight:600;color:#1e2756;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #e8eaf2">
+                            👤 PYO: <span th:text="${pyoEntry.key.name}"></span>
+                            <span class="badge badge-gray" style="margin-left:8px"
+                                  th:text="${#lists.size(pyoEntry.value)} + ' personel'"></span>
+                        </div>
+
+                        <div th:with="teamMap=${pyoEntry.value.stream().collect(
+                                T(java.util.stream.Collectors).groupingBy(s -> s.getTeam()))}">
+                            <div th:each="teamEntry : ${teamMap}" class="card" style="margin-bottom:10px">
+                                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                                    <div style="font-size:13px;font-weight:600">
+                                        Ekip: <span th:text="${teamEntry.key.name}"></span>
+                                    </div>
+                                    <div style="display:flex;gap:6px">
+                                        <span class="badge badge-teal" th:text="${teamEntry.key.room.name}"></span>
+                                        <span class="badge badge-gray"
+                                              th:text="${#lists.size(teamEntry.value)} + ' üye'"></span>
+                                    </div>
+                                </div>
+                                <div class="person-list-item" th:each="s : ${teamEntry.value}"
+                                     style="padding:8px 0;border-color:#f8faff">
+                                    <div class="avatar badge-blue" th:text="${s.initials}"></div>
+                                    <div class="person-info">
+                                        <div class="person-name" th:text="${s.name}"></div>
+                                        <div class="person-meta" th:if="${s.email}" th:text="${s.email}"></div>
+                                    </div>
+                                    <div class="day-tags">
+                                        <div th:each="d : ${allDays}"
+                                             th:class="${s.workDays.contains(d)} ? 'day-tag on' : 'day-tag off'"
+                                             th:text="${d.shortName}"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- end distributed -->
+
+        <!-- Not yet distributed -->
+        <div th:unless="${distributed}" class="card">
+            <div class="empty-state">
+                <div class="empty-icon">📅</div>
+                Dağıtım henüz yapılmadı. Yukarıdaki "Dağıtımı Çalıştır" butonuna tıklayın.
+            </div>
+        </div>
+
+    </main>
+</div>
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="tr">
+<body>
+<aside th:fragment="sidebar(activePage)" class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-icon">HP</div>
+        <div>
+            <div class="brand-name">Hybrid Planner</div>
+            <div class="brand-sub">Oturma düzeni yönetimi</div>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-section-label">Tanımlar</div>
+        <a th:href="@{/pyo}"
+           th:class="${activePage == 'pyo'} ? 'nav-item active' : 'nav-item'">
+            <span class="nav-icon">👤</span> PYO Yönetimi
+        </a>
+        <a th:href="@{/room}"
+           th:class="${activePage == 'room'} ? 'nav-item active' : 'nav-item'">
+            <span class="nav-icon">🚪</span> Oda Yönetimi
+        </a>
+        <a th:href="@{/team}"
+           th:class="${activePage == 'team'} ? 'nav-item active' : 'nav-item'">
+            <span class="nav-icon">👥</span> Ekip Yönetimi
+        </a>
+        <a th:href="@{/staff}"
+           th:class="${activePage == 'staff'} ? 'nav-item active' : 'nav-item'">
+            <span class="nav-icon">🧑‍💻</span> Personel Yönetimi
+        </a>
+        <div class="nav-section-label">Planlama</div>
+        <a th:href="@{/distribute}"
+           th:class="${activePage == 'distribute'} ? 'nav-item active' : 'nav-item'">
+            <span class="nav-icon">📅</span> Dağıtım
+        </a>
+    </nav>
+</aside>
+</body>
+</html>

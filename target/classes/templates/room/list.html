@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="tr">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Oda Yönetimi — Hybrid Planner</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div class="layout">
+    <aside th:replace="~{fragments/sidebar :: sidebar('room')}"></aside>
+    <main class="main-content">
+
+        <div th:if="${success}" class="alert alert-success">✓ <span th:text="${success}"></span></div>
+        <div th:if="${error}"   class="alert alert-error">✗ <span th:text="${error}"></span></div>
+        <div th:if="${importErrors}" class="warning-list">
+            <div class="warning-list-title">Import Hataları</div>
+            <ul><li th:each="e : ${importErrors}" th:text="${e}"></li></ul>
+        </div>
+
+        <div class="page-header">
+            <div class="page-title">Oda Yönetimi</div>
+            <div class="page-subtitle">Bina odalarını ve kapasitelerini tanımlayın.</div>
+        </div>
+
+        <div class="tab-bar">
+            <button class="tab-btn active" data-tab="manual" onclick="switchTab('manual')">Tekli Ekle</button>
+            <button class="tab-btn" data-tab="excel" onclick="switchTab('excel')">Excel ile Import</button>
+        </div>
+
+        <div id="tab-manual" class="tab-content active">
+            <div class="card">
+                <div class="card-title">Yeni Oda Ekle</div>
+                <form th:action="@{/room}" method="post">
+                    <div class="form-row">
+                        <div class="form-group wide">
+                            <label>Oda Adı</label>
+                            <input type="text" name="name" placeholder="ör. Oda 101" required maxlength="100"/>
+                        </div>
+                        <div class="form-group narrow">
+                            <label>Kapasite</label>
+                            <input type="number" name="capacity" placeholder="6" min="1" max="100" required/>
+                        </div>
+                        <div style="padding-top:20px">
+                            <button class="btn btn-primary" type="submit">+ Ekle</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="tab-excel" class="tab-content">
+            <div class="card">
+                <div class="card-title">Excel ile Toplu Import</div>
+                <div class="import-box">
+                    <div class="import-title">📋 Excel Formatı (.xlsx)</div>
+                    <table class="excel-format-table">
+                        <thead><tr><th>A: Oda Adı *</th><th>B: Kapasite *</th></tr></thead>
+                        <tbody>
+                        <tr><td>Oda 101</td><td>6</td></tr>
+                        <tr><td>Oda 202</td><td>8</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <form th:action="@{/room/import}" method="post" enctype="multipart/form-data">
+                    <div class="form-row" style="align-items:flex-end">
+                        <div class="form-group">
+                            <label>Excel Dosyası (.xlsx)</label>
+                            <input type="file" name="file" accept=".xlsx" required/>
+                        </div>
+                        <div><button class="btn btn-success" type="submit">📥 Import Et</button></div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card" style="padding:0;margin-top:20px">
+            <div th:if="${#lists.isEmpty(rooms)}" class="empty-state">
+                <div class="empty-icon">🚪</div>Henüz oda tanımlanmamış.
+            </div>
+            <table th:unless="${#lists.isEmpty(rooms)}">
+                <thead><tr><th>Oda Adı</th><th>Kapasite</th><th>Atanan</th><th>Doluluk</th><th>İşlem</th></tr></thead>
+                <tbody>
+                <tr th:each="r : ${rooms}">
+                    <td style="font-weight:500" th:text="${r.name}"></td>
+                    <td><span class="badge badge-blue" th:text="${r.capacity} + ' kişi'"></span></td>
+                    <td><span th:text="${roomUsage[r.id] != null ? roomUsage[r.id] : 0} + ' kişi'"></span></td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <div style="flex:1;height:6px;background:#f0f2f8;border-radius:3px;max-width:80px">
+                                <div th:style="'width:' + ${roomUsage[r.id] != null ? T(java.lang.Math).min(100, roomUsage[r.id] * 100 / r.capacity) : 0} + '%;height:100%;border-radius:3px;background:' + (${roomUsage[r.id] != null and roomUsage[r.id] > r.capacity} ? '#e74c3c' : '#4a6fdf')"></div>
+                            </div>
+                            <span style="font-size:11px;color:#888"
+                                  th:text="${roomUsage[r.id] != null ? roomUsage[r.id] : 0} + '/' + ${r.capacity}"></span>
+                        </div>
+                    </td>
+                    <td>
+                        <form th:action="@{/room/{id}/delete(id=${r.id})}" method="post" th:id="'del-room-' + ${r.id}">
+                            <button type="button" class="btn btn-danger"
+                                    th:data-formid="'del-room-' + ${r.id}"
+                                    th:data-name="${r.name}"
+                                    onclick="confirmDeleteBtn(this)">Sil</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>
